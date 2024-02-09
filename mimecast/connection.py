@@ -7,7 +7,8 @@ import hmac
 import time
 import mimecast.Config
 
-from mimecast.logger import log, get_hdr_date
+from mimecast.logger import log
+from mimecast.date import get_hdr_date
 
 
 class Mimecast():
