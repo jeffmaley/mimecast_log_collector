@@ -6,13 +6,23 @@ Supports the following Mimecast endpoints:
 * get-siem-logs
 * get-audit-events
 
+get-siem-logs provides logging data about messages sent, received and processed. Because of the number of messages, it is
+recommended that the following be set in mimecast/Config.py:
+```
+   self.api_options = {
+      'COMPRESSED': True
+   }
+```
+
+get-audit-events provides logging data about admninistrative actions within Mimecast
+
 ## Documentation:
 
 https://www.mimecast.com/tech-connect/documentation/endpoint-reference/
 
 ## Getting Started:
 1. Edit `Config.py` to change Mimecast API details and select approriate requirements. The auth creds are required (you will need to generate a API user via the console) - https://www.mimecast.com/tech-connect/documentation <br>
-2. The script will automatically create the directories defined in 'configuration.py` for hashing / logging
+2. The script will automatically create the directories defined in 'Config.py` for hashing / logging
 3. Run `run.py` to start ingesting - program is threaded so each source configured in `Config.py` will run simultaneously.
 
 ## Output:

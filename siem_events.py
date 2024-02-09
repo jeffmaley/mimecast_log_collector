@@ -1,7 +1,8 @@
 from mimecast.connection import Mimecast
 import os
 import time
-from mimecast.logger import log, write_file, read_file
+from mimecast.logger import log
+from mimecast.file import write_file, read_file
 from mimecast.decompress import unpack_and_write
 from mimecast.s3 import copy_to_s3
 from mimecast.paramstore import get_ssm_parameter, put_ssm_paramter
@@ -73,11 +74,13 @@ def get_mta_siem_logs(checkpoint_dir, base_url, access_key, secret_key):
                     log_dir = unpack_and_write(resp_body, Config.get_logging_details()['LOG_FILE_PATH'])
                     for file_name in os.listdir(f"{Config.get_logging_details()['LOG_FILE_PATH']}/{log_dir}"):
                         filename_list.append(file_name)
+                    log.info(f"Wrote {len(filename_list)} SIEM files")
                 else:
                     log.debug("Processing uncompressed data")
                     file_name = resp_headers['Content-Disposition'].split('=\"')
                     file_name = file_name[1][:-1]
                     write_file(os.path.join(Config.get_logging_details()['LOG_FILE_PATH'], file_name), resp_body)
+                    log.info(f"Wrote SIEM file {Config.get_logging_details()['LOG_FILE_PATH']}/{file_name}")
                     filename_list.append(file_name)
             except Exception as e:
                 print(e)
@@ -89,6 +92,7 @@ def get_mta_siem_logs(checkpoint_dir, base_url, access_key, secret_key):
                             copy_to_s3(log_dir, log_file, Config.get_logging_details()['LOG_FILE_PATH'], Config.get_s3_options()['S3_BUCKET'])
                     except Exception as e:
                         log.error('Unexpected error writing to log data. Exception: ' + str(e))
+                log.info(f"Copied {len(filename_list)} SIEM files to S3")
 
                 # Save mc-siem-token page token to check point directory
                 if Config.get_logging_details()["CHK_POINT_CLOUD"]:

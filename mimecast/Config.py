@@ -5,10 +5,15 @@ import os
 class Config():
 
     def __init__(self):
+        # My dev env has an EDR and ssl verify doesn't work
         if not os.environ.get("MIMECAST_NO_VERIFY_SSL"):
             self.verify_ssl = True
         else:
             self.verify_ssl = False
+
+        # internal log-level
+        self.log_level = "DEBUG"
+
         self.source_details = {
             "siem_events": True,
             "audit_events": True
@@ -23,6 +28,7 @@ class Config():
             'INTERVAL_TIMER': 60
         }
 
+        # get-siem-logs can provide one log at a time or a compressed archive
         self.api_options = {
             'COMPRESSED': True
         }
@@ -118,6 +124,9 @@ class Config():
 
     def get_verify_ssl(self):
         return self.verify_ssl
+
+    def get_log_level(self):
+        return self.log_level
 
 
 # This has to be at the end to avoid circular imports

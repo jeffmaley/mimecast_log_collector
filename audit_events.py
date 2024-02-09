@@ -6,7 +6,9 @@ import mimecast.Config
 from mimecast.connection import Mimecast
 from mimecast.s3 import copy_to_s3
 from mimecast.paramstore import get_ssm_parameter, put_ssm_paramter
-from mimecast.logger import log, get_current_date, get_old_date
+from mimecast.logger import log
+from mimecast.date import get_current_date, get_old_date
+from mimecast.file import write_file
 import random
 import string
 
@@ -30,6 +32,7 @@ def get_audit_events(base_url, access_key, secret_key):
     post_body = dict()
     current_date = get_current_date()
     audit_checkpoint = get_ssm_parameter(Config.get_logging_details()['CHK_POINT_CLOUD_LOCATION_AUDIT'])
+    # if there's no previous checkpoint, we'll look back 14 days
     if Config.get_logging_details()["CHK_POINT_CLOUD"] and audit_checkpoint != "INITVALUE":
         post_body['data'] = [{'startDateTime': get_old_date(old_date=audit_checkpoint), 'endDateTime': current_date}]
     else:
@@ -61,14 +64,15 @@ def get_audit_events(base_url, access_key, secret_key):
                 try:
                     current_date_pre = current_date.split("T")[0]
                     log_dir = f'audit_events/{current_date_pre.split("-")[0]}/{current_date_pre.split("-")[1]}/{current_date_pre.split("-")[2]}'
-                    if not os.path.exists(f"{Config.get_logging_details()['LOG_FILE_PATH']}/{file_name}/{log_dir}"):
-                        os.makedirs(f"{Config.get_logging_details()['LOG_FILE_PATH']}/{file_name}/{log_dir}")
-                    with open(f"{Config.get_logging_details()['LOG_FILE_PATH']}/{file_name}/{log_dir}/{file_name}", "w") as o:
-                        o.write(json.dumps(resp_body))
-
+                    # if not os.path.exists(f"{Config.get_logging_details()['LOG_FILE_PATH']}/{file_name}/{log_dir}"):
+                    #     os.makedirs(f"{Config.get_logging_details()['LOG_FILE_PATH']}/{file_name}/{log_dir}")
+                    # with open(f"{Config.get_logging_details()['LOG_FILE_PATH']}/{file_name}/{log_dir}/{file_name}", "w") as o:
+                    #     o.write(json.dumps(resp_body))
+                    write_file(file_name, json.dumps(resp_body), path=f"{Config.get_logging_details()['LOG_FILE_PATH']}/{file_name}/{log_dir}")
+                    log.info(f"Wrote {Config.get_logging_details()['LOG_FILE_PATH']}/{file_name}/{log_dir}/{file_name}")
                     if Config.get_s3_options()['COPY_TO_S3'] is True:
                         copy_to_s3(log_dir, file_name, f"{Config.get_logging_details()['LOG_FILE_PATH']}/{file_name}", Config.get_s3_options()['S3_BUCKET'])
-
+                    log.info(f"Copied {Config.get_logging_details()['LOG_FILE_PATH']}/{file_name}/{log_dir}/{file_name} to S3")
                 except Exception as e:
                     log.error('Unexpected error writing to log data. Exception: ' + str(e))
 
