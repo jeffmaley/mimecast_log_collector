@@ -128,6 +128,7 @@ def get_siem_logs():
         log.info('Getting MTA log data')
         while get_mta_siem_logs(checkpoint_dir=Config.get_logging_details()['CHK_POINT_DIR'], base_url=base_url, access_key=Config.get_access_key(), secret_key=Config.get_secret_key()) is True:
             log.info("Getting additional SIEM logs")
+            time.sleep(interval_time)
     except Exception as e:
         log.error('Unexpected error getting MTA logs ' + (str(e)))
     quit()
